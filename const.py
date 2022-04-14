@@ -1,0 +1,15 @@
+
+# Definition of LED
+LED_EMPTY = 1
+LED_FAULT = 2
+LED_READY = 3
+LED_DISPENSING = 4
+
+LED_25P = 14
+LED_50P = 15
+LED_75P = 16
+LED_100P = 17
+
+IR_LOW = 0
+IR_HIGH = 1
+
