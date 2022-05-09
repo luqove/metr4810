@@ -1,20 +1,22 @@
-import ULSensor_maynard
+from Lib.ULSensor_maynard import distance
+
 
 class ULSensor(object):
     """
-    UI 传感器实例，用于实现ULSensor的各种方法
-    注意，这里的方法要根据写sensor的同学的方法改。
-
-    我的想法是每个传感器都是一个单独的线程，负责读取和返回数据。
+    UI sensor instance for implementing various methods of ULSensor
+    Note that the method here should be changed according to the method of the classmate who wrote the sensor.
+    My idea is that each sensor is a separate thread responsible for reading and returning data.
     """
 
-    def __init__(self):
-        self.current_read = 0  # 目前的读数
+    
 
-    # 读取UL_sensor的函数
-    # 每次更新数据就调用这个,并将数据储存到 self.current_read里
-    # 这里你要和做sensor的组员协商
-    # 可以考虑读取多个数据取平均值
+    def __init__(self):
+        self.current_read = 0  # current reading
+
+    # Function to read UL_sensor
+    # Call this every time the data is updated and store the data in self.current_read
+    
     def read_data(self):
-        # 这里我就调用你那个同学的超声波读取了。
-        return ULSensor_maynard.distance()
+        self.current_read = distance()
+        # Here I call ultrasound reading.
+        return self.current_read

@@ -1,76 +1,74 @@
-import sys
+from system_lib import *
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow
+def main():
+    system = System()
+    while True:
+        if system.reset_button.is_pushed():
+            system.reset()
 
-from MaskUi import Ui_MainWindow
+        # Check if tray is empty
+        if system.is_mask_tray_empty():
+            system.report_empty()
+            # And skip all the following processes and directly wait for the reset
+            system.HALT()
+            # When the HALT is over, go back to the beginning of the loop
+            continue
 
+        # Detect masks in stack and display
+        system.display_stack_level()
 
-class MainWindow(QMainWindow, Ui_MainWindow):
-    """
-    主界面
-    """
+        # Detect whether the mask is being transmitted (this mask should not be transmitting, 
+        # if it is, an error will be reported
+        if system.is_mask_in_transit():
+            system.report_fault()
+            # And skip all the following processes and directly wait for the reset
+            system.HALT()
+            # When the HALT is over, go back to the beginning of the loop
+            continue
+        else:
+            system.turn_on_led(LED_READY)
+            # The mask machine is started, waiting for the customer to issue a mask request
+            system.wait_request()
 
-    # 初始化func，用于预先定义后面要用到的成员变量
-    def __init__(self, parent=None):
-        super(MainWindow, self).__init__(parent)
-        self.setupUi(self)
+        # Here, it means that a customer has come to the door
+        system.dispensing_mask()
+        # TODO because the motor dispensing_mask takes time.
+        # Maybe add a time.sleep(), but not necessarily useful
+       
+        # Check if the mask has been removed from the stack correctly
+        if not system.is_mask_in_waiting_position():
+            system.report_fault()
+           
+            system.HALT()
+            
+            continue
 
-        # 连接槽函数
-        self.Clear_status_btn.clicked.connect(self.clear_feedback_bro)
-        self.actionRefill_mask.triggered.connect(lambda: self.set_mask_num(50))
-        self.actionEmpty_mask.triggered.connect(lambda: self.set_mask_num(0))
-        self.actionRemove_1mask.triggered.connect(lambda: self.mask_num_decrease_by(1))
-        self.actionRemove_50mask.triggered.connect(lambda: self.mask_num_decrease_by(50))
-        self.actionAdd_1mask.triggered.connect(lambda: self.mask_num_increase_by(1))
-        self.actionAdd_50mask.triggered.connect(lambda: self.mask_num_increase_by(50))
+        # Hand out the mask and wait until
+        system.release_mask_partially_and_wait()
 
-    # 每次调用，减少相应数量的口罩
-    # num_decrease 就是要减少的数量
-    def mask_num_decrease_by(self, num):
-        mask_number = int(self.Mask_number_bro.toPlainText())
-        mask_number -= num
-        self.set_mask_num(mask_number)
+        
+        if system.is_mask_still_waiting_collection():
+            system.release_mask_totally()
+            # TODO 
+            # maybe time.sleep()
+            
 
-    # 添加口罩数量
-    def mask_num_increase_by(self, num):
-        mask_number = int(self.Mask_number_bro.toPlainText())
-        mask_number += num
-        self.set_mask_num(mask_number)
+        # Check again whether the masks are all pushed out, if not, report an error
+        if system.is_mask_still_waiting_collection():
+            system.report_fault()
+            
+            system.HALT()
+            
+            continue
 
-    # 反馈口罩机空了
-    def empty_feedback(self):
-        self.Feedback_bro.append(">>empty, please refill mask\n")
-
-    # 反馈故障
-    def error_occor(self):
-        self.Feedback_bro.append(">>Error!\n")
-
-    # 设定口罩机内口罩的数量
-    # 目前最大数量为9999
-    def set_mask_num(self, num):
-        # 如果输入数字为0，自动报空
-        if num == 0:
-            self.empty_feedback()
-        # 如果输入数字小于0，报错
-        elif num < 0 or num > 99:
-            self.error_occor()
-            return
-        # 根据数字长短调节显示, 不足四位，在前面补0
-        display = str(num)
-        if len(str(num)) <= 4:
-            for a in range(4 - len(str(num))):
-                display = "remaining mask: 0" + display
-        self.Mask_number_bro.setText(display)
-        self.Mask_number_bro.setAlignment(Qt.AlignCenter)
-
-    # 清空状态文本框
-    def clear_feedback_bro(self):
-        self.Feedback_bro.clear()
+        # Close the door, and send data to the GUI
+        system.close_door()
+        system.stack_count -= 1
+        system.send_current_stack_count()
+        system.reset_report_led()
+        # TODO 
+        # maybe time.sleep()
 
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    win = MainWindow()
-    win.show()
-    sys.exit(app.exec_())
+    main()
