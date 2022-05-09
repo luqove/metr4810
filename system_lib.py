@@ -168,8 +168,8 @@ class System(object):
     # Is mask requested
     def is_mask_requested(self):
         self.UL_sensor_1.read_data()
-        # # TODO 1000是我随便写的 ULsensor的读数判断要根据实际值取修改
-        if self.UL_sensor_1.current_read < 1000:
+        # TODO 根据同学提供的ULsensor文件，
+        if self.UL_sensor_1.current_read < 40:
             return True
         else:
             return False
