@@ -4,7 +4,7 @@ import time
 
 class ServoMotor(object):
     """
-    舵机控制
+    Servo
     """
 
     # pin就是对应的引脚。
